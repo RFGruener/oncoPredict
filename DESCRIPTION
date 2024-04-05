@@ -4,7 +4,7 @@ Title: Drug Response Modeling and Biomarker Discovery
 Version: 1.2
 URL: https://github.com/HuangLabUMN/oncoPredict
 BugReports: https://github.com/HuangLabUMN/oncoPredict/issues
-Author: Authors@R: c(
+Authors@R: c(
       person(given = "Danielle",
             family = "Maeser",
             role = "aut",
