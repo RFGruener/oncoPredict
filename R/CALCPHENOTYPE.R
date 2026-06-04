@@ -710,3 +710,126 @@ calcPhenotype<-function (trainingExprData,
 
   #print(vs)
 }
+
+#'Calculate Cross-Validation Scores using OncoPredict
+#'
+#'This function predicts a phenotype (drug sensitivity score) when provided with microarray or bulk RNAseq gene expression data of different platforms.
+#'The imputations are performed using ridge regression, training on a gene expression matrix where phenotype is already known.
+#'This function integrates training and testing datasets via a user-defined procedure, and power transforming the known phenotype.
+#'@param trainingExprData The training data. A matrix of expression levels. rownames() are genes, colnames() are samples (cell line names or cosmic ides, etc.). rownames() must be specified and must contain the same type of gene ids as "testExprData"
+#'@param trainingPtype The known phenotype for "trainingExprData". This data must be a matrix of drugs/rows x cell lines/columns or cosmic ids/columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).
+#'@param testExprData The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".
+#'@param batchCorrect How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantiles normalization or "none" for no homogenization.
+#'@param powerTransformPhenotype Should the phenotype be power transformed before we fit the regression model? Default to TRUE, set to FALSE if the phenotype is already known to be highly normal.
+#'@param removeLowVaryingGenes What proportion of low varying genes should be removed? 20 percent be default
+#'@param minNumSamples How many training and test samples are required. Print an error if below this threshold
+#'@param selection How should duplicate gene ids be handled. Default is -1 which asks the user. 1 to summarize by their or 2 to disguard all duplicates.
+#'@param printOutput Set to FALSE to supress output.
+#'@param pcr Indicates whether or not you'd like to use pcr for feature (gene) reduction. Options are 'TRUE' and 'FALSE'. If you indicate 'report_pc=TRUE' you need to also indicate 'pcr=TRUE'
+#'@param removeLowVaringGenesFrom Determine method to remove low varying genes. Options are 'homogenizeData' and 'rawData'.
+#'@param report_pc Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'. Folder must be set to TRUE.
+#'@param cc Indicate if you want correlation coefficients for biomarker discovery. folder must be set to TRUE
+#'@param percent Indicate percent variability (of the training data) you'd like principal components to reflect if pcr=TRUE. Default is 80 for 80%
+#'These are the correlations between a given gene of interest across all samples vs. a given drug response across samples.
+#'These correlations can be ranked to obtain a ranked correlation to determine highly correlated drug-gene associations.
+#'@param rsq Indicate whether or not you want to output the R^2 values for the data you train on from true and predicted values.
+#'These values represent the percentage in which the optimal model accounts for the variance in the training data.
+#'Options are 'TRUE' and 'FALSE'. folder must be set to TRUE
+#'@param folder Indicate whether the user wants to return a folder or simply assign the calcPhenotype output. If true, run the function without assignment as it will return a folder with the results. If false, assign <- calcphenotype to save results
+#' @param cvFold Indicate the number of k-folds wanted in the CV calculation. -1 indicates a leave-one-out cross validation
+
+#'@return Depends on the folder parameter. If folder = True, .txt files will be saved into a folder in your working directory automatically. The folder will include the estimated drug response values as a .txt file. Depending on the rsq, cc, report_pc parameters specified, the .txt file outputs of this function will also include
+#'the R^2 data, and the correlation coefficients and principal components are stored as .RData files for each drug in your drug dataset.
+#'If folder = 'FALSE', then only the predicted drug response values will be returned as an object.
+#'@import sva
+#'@import ridge
+#'@import car
+#'@import ridge
+#'@import glmnet
+#'@import tidyverse
+#'@import utils
+#'@import stats
+#'@importFrom pls explvar explvar
+#'@keywords predict drug sensitivity and phenotype
+#'@export
+predictionAccuracybyCV <- function (trainingExprData,
+                                    trainingPtype,
+                                    testExprData,
+                                    batchCorrect,
+                                    powerTransformPhenotype=TRUE,
+                                    removeLowVaryingGenes=0.2,
+                                    minNumSamples,
+                                    selection=1,
+                                    printOutput,
+                                    pcr=FALSE,
+                                    removeLowVaringGenesFrom,
+                                    report_pc=FALSE,
+                                    cc=FALSE,
+                                    percent=80,
+                                    rsq=FALSE,
+                                    folder = TRUE, cvFold = -1)
+
+
+{  if ((ncol(trainingExprData) < minNumSamples)) {
+  stop(paste("There are less than", minNumSamples, "samples in your test or training set. It is strongly recommended that you use larger numbers of samples in order to (a) correct for intrinsic difference in your training and test sets and (b) fit a reliable model. To supress this message, change the \"minNumSamples\" parameter to this function."))
+}
+  if (is.null(testExprData)) {
+    homData <- list()
+    homData$selection <- selection
+    homData$train <- trainingExprData
+  }
+  else if (!is.null(testExprData)) {
+    homData <- homogenizeData(testExprData, trainingExprData,
+                              batchCorrect = batchCorrect, selection = selection)
+  }
+  nTrain <- ncol(trainingExprData)
+  predPtype <- numeric()
+  if (cvFold == -1) {
+    for (i in 1:nTrain) {
+      testMatTemp <- matrix(homData$train[, i], ncol = 1)
+      rownames(testMatTemp) <- rownames(homData$train)
+      predPtype[i] <- calcPhenotype(homData$train[, -i],
+                                    trainingPtype[-i], testMatTemp, batchCorrect = "none",
+                                    minNumSamples = 0, selection = homData$selection,
+                                    removeLowVaryingGenes = removeLowVaryingGenes,
+                                    powerTransformPhenotype = powerTransformPhenotype,
+                                    printOutput = FALSE, pcr= pcr, percent= percent,
+                                    removeLowVaringGenesFrom = removeLowVaringGenesFrom,
+                                    report_pc=FALSE, cc=FALSE, rsq=FALSE, folder = FALSE)
+
+      if (i%%as.integer(nTrain/5) == 0)
+        cat(paste(i, "of", nTrain, "iterations complete. \n"))
+    }
+  }
+  else if (cvFold > 1) {
+    randTestSamplesIndex <- sample(1:nTrain)
+    sampleGroup <- rep(cvFold, nTrain)
+    groupSize <- as.integer(nTrain/cvFold)
+    for (j in 1:(cvFold - 1)) {
+      sampleGroup[(((j - 1) * groupSize) + 1):(j * groupSize)] <- rep(j,
+                                                                      groupSize)
+    }
+    cvGroupIndexList <- split(randTestSamplesIndex, sampleGroup)
+    for (j in 1:cvFold) {
+      testCvSet <- homData$train[, cvGroupIndexList[[j]]]
+      trainCvSet <- homData$train[, unlist(cvGroupIndexList[-j])]
+      trainPtypeCv <- trainingPtype[unlist(cvGroupIndexList[-j])]
+      predPtype <- c(predPtype, calcPhenotype(trainCvSet,
+                                              trainPtypeCv, testCvSet, batchCorrect = "none",
+                                              minNumSamples = 0, selection = homData$selection,
+                                              removeLowVaryingGenes = removeLowVaryingGenes,
+                                              powerTransformPhenotype = powerTransformPhenotype,
+                                              printOutput = FALSE, pcr= pcr, percent= percent,
+                                              removeLowVaringGenesFrom = removeLowVaringGenesFrom,
+                                              report_pc=FALSE, cc=FALSE, rsq=FALSE, folder = FALSE))
+      cat(paste("\n", j, " of ", cvFold, " iterations complete.",
+                sep = ""))
+    }
+    predPtype <- predPtype[order(randTestSamplesIndex)]
+  }
+  else {
+    stop("Unrecognised value of \"cvFold\"")
+  }
+  finalData <- list(cvPtype = predPtype, realPtype = trainingPtype)
+  return(finalData)
+}
