@@ -51,13 +51,13 @@ library(oncoPredict)
 #gbm.nocnv<-GDCprepare(query.gbm.nocnv, save = TRUE, save.filename = "GBMnocnvhg19.rda")
 #write.table(gbm.nocnv, file='cnv.txt')
 
-#Second, apply map_cnv() to map cnv data to genes. The mapped cnv data will be exported to your working directory as map.RData
+#Second, apply map_cnv() to map cnv data to genes.
 #The mapping is accomplished by intersecting the gene with the overlapping CNV level. If the gene isn't fully #captured by the CNV, an NA will be assigned.
 
 #Determine the parameters of the map_cnv() function.
 Cnvs<-read.table(vignette_file("cnv.txt"), header=TRUE, row.names=1)
 
-#Third, apply idwas() to test each cnv and each drug. The p-values and beta-values for each test will be exported to #your working directory as CnvTestOutput_pVals.txt and CnvTestOutput_betas.txt
+#Third, apply idwas() to test each cnv and each drug. The p-values and beta-values for each test will be returned as an object.
 
 #Determine the parameters of the idwas() function...
 
@@ -85,18 +85,16 @@ tryCatch({
   setwd(tempdir())
 
   #Apply map_cnv()
-  #This function produces the file map.RData, which stores the object 'theCnvQuantVecList_mat'
-  map_cnv(Cnvs=Cnvs)
+  mapped_cnv <- map_cnv(Cnvs=Cnvs)
 
   #Set the data parameter.
-  load("map.RData") #This loads the object 'theCnvQuantVecList_mat', which was obtained using map_cnv()
   #Make sure this data is a data frame and that colnames() are samples.
-  data<-as.data.frame(t(theCnvQuantVecList_mat))
+  data<-as.data.frame(t(mapped_cnv$theCnvQuantVecList_mat))
   samps<-colnames(data)
   colnames(data)<-substr(samps,1,nchar(samps)-12)
 
   #Apply idwas()
-  idwas(drug_prediction=drug_prediction, data=data, n=n, cnv=cnv)
+  idwas_results <- idwas(drug_prediction=drug_prediction, data=data, n=n, cnv=cnv)
 }, finally = setwd(old_wd))
 
 ```

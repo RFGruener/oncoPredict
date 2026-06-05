@@ -142,21 +142,21 @@ old_wd<-getwd()
 tryCatch({
   setwd(tempdir())
 
-  calcPhenotype(trainingExprData=trainingExprData,
-                trainingPtype=trainingPtype,
-                testExprData=testExprData,
-                batchCorrect=batchCorrect,
-                powerTransformPhenotype=powerTransformPhenotype,
-                removeLowVaryingGenes=removeLowVaryingGenes,
-                minNumSamples=minNumSamples,
-                selection=selection,
-                printOutput=printOutput,
-                pcr=pcr,
-                removeLowVaringGenesFrom=removeLowVaringGenesFrom,
-                report_pc=report_pc,
-                cc=cc,
-                percent=percent,
-                rsq=rsq)
+  drug_predictions <- calcPhenotype(trainingExprData=trainingExprData,
+                                    trainingPtype=trainingPtype,
+                                    testExprData=testExprData,
+                                    batchCorrect=batchCorrect,
+                                    powerTransformPhenotype=powerTransformPhenotype,
+                                    removeLowVaryingGenes=removeLowVaryingGenes,
+                                    minNumSamples=minNumSamples,
+                                    selection=selection,
+                                    printOutput=printOutput,
+                                    pcr=pcr,
+                                    removeLowVaringGenesFrom=removeLowVaringGenesFrom,
+                                    report_pc=report_pc,
+                                    cc=cc,
+                                    percent=percent,
+                                    rsq=rsq)
 }, finally = setwd(old_wd))
 
 #If pcr is performed, you can view a drug's first two principal components (and so on) using the code below. 

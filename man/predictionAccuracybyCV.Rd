@@ -20,7 +20,7 @@ predictionAccuracybyCV(
   cc = FALSE,
   percent = 80,
   rsq = FALSE,
-  folder = TRUE,
+  folder = FALSE,
   cvFold = -1
 )
 }
@@ -47,9 +47,9 @@ predictionAccuracybyCV(
 
 \item{removeLowVaringGenesFrom}{Determine method to remove low varying genes. Options are 'homogenizeData' and 'rawData'.}
 
-\item{report_pc}{Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'. Folder must be set to TRUE.}
+\item{report_pc}{Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'.}
 
-\item{cc}{Indicate if you want correlation coefficients for biomarker discovery. folder must be set to TRUE}
+\item{cc}{Indicate if you want correlation coefficients for biomarker discovery.}
 
 \item{percent}{Indicate percent variability (of the training data) you'd like principal components to reflect if pcr=TRUE. Default is 80 for 80\%
 These are the correlations between a given gene of interest across all samples vs. a given drug response across samples.
@@ -57,16 +57,14 @@ These correlations can be ranked to obtain a ranked correlation to determine hig
 
 \item{rsq}{Indicate whether or not you want to output the R^2 values for the data you train on from true and predicted values.
 These values represent the percentage in which the optimal model accounts for the variance in the training data.
-Options are 'TRUE' and 'FALSE'. folder must be set to TRUE}
+Options are 'TRUE' and 'FALSE'.}
 
-\item{folder}{Indicate whether the user wants to return a folder or simply assign the calcPhenotype output. If true, run the function without assignment as it will return a folder with the results. If false, assign <- calcphenotype to save results}
+\item{folder}{Retained for compatibility with calcPhenotype arguments. Cross-validation results are returned as an object.}
 
 \item{cvFold}{Indicate the number of k-folds wanted in the CV calculation. -1 indicates a leave-one-out cross validation}
 }
 \value{
-Depends on the folder parameter. If folder = True, .txt files will be saved into a folder in your working directory automatically. The folder will include the estimated drug response values as a .txt file. Depending on the rsq, cc, report_pc parameters specified, the .txt file outputs of this function will also include
-the R^2 data, and the correlation coefficients and principal components are stored as .RData files for each drug in your drug dataset.
-If folder = 'FALSE', then only the predicted drug response values will be returned as an object.
+A list containing cross-validated predicted phenotype values and real phenotype values.
 }
 \description{
 This function predicts a phenotype (drug sensitivity score) when provided with microarray or bulk RNAseq gene expression data of different platforms.

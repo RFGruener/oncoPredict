@@ -47,8 +47,7 @@ library(oncoPredict)
 
 #Apply completeMatrix()
 #_____________________________________________________________________
-#This function will create a file called complete_matrix_output.txt in your working directory.
-#This file is used as input in the next function.
+#This function returns the completed matrix. Set folder=TRUE to also write complete_matrix_output.txt.
 
 #completeMatrix(trainingPtype)
 
@@ -134,11 +133,11 @@ old_wd<-getwd()
 tryCatch({
   setwd(tempdir())
 
-  glds(drugMat,
-       drugRelatedness,
-       markerMat,
-       minMuts=5,
-       additionalCovariateMatrix=NULL,
-       threshold=0.7)
+  glds_results <- glds(drugMat,
+                       drugRelatedness,
+                       markerMat,
+                       minMuts=5,
+                       additionalCovariateMatrix=NULL,
+                       threshold=0.7)
 }, finally = setwd(old_wd))
 ```

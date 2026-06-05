@@ -232,27 +232,22 @@ summarizeGenesByMean <- function(exprMat)
 #'@param printOutput Set to FALSE to supress output.
 #'@param pcr Indicates whether or not you'd like to use pcr for feature (gene) reduction. Options are 'TRUE' and 'FALSE'. If you indicate 'report_pc=TRUE' you need to also indicate 'pcr=TRUE'
 #'@param removeLowVaringGenesFrom Determine method to remove low varying genes. Options are 'homogenizeData' and 'rawData'.
-#'@param report_pc Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'. Folder must be set to TRUE.
-#'@param cc Indicate if you want correlation coefficients for biomarker discovery. folder must be set to TRUE
+#'@param report_pc Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'.
+#'@param cc Indicate if you want correlation coefficients for biomarker discovery.
 #'@param percent Indicate percent variability (of the training data) you'd like principal components to reflect if pcr=TRUE. Default is 80 for 80%
 #'These are the correlations between a given gene of interest across all samples vs. a given drug response across samples.
 #'These correlations can be ranked to obtain a ranked correlation to determine highly correlated drug-gene associations.
 #'@param rsq Indicate whether or not you want to output the R^2 values for the data you train on from true and predicted values.
 #'These values represent the percentage in which the optimal model accounts for the variance in the training data.
-#'Options are 'TRUE' and 'FALSE'. folder must be set to TRUE
-#'@param folder Indicate whether the user wants to return a folder or simply assign the calcPhenotype output. If true, run the function without assignment as it will return a folder with the results. If false, assign <- calcphenotype to save results
-#'@return Depends on the folder parameter. If folder = True, .txt files will be saved into a folder in your working directory automatically. The folder will include the estimated drug response values as a .txt file. Depending on the rsq, cc, report_pc parameters specified, the .txt file outputs of this function will also include
-#'the R^2 data, and the correlation coefficients and principal components are stored as .RData files for each drug in your drug dataset.
-#'If folder = 'FALSE', then only the predicted drug response values will be returned as an object.
+#'Options are 'TRUE' and 'FALSE'.
+#'@param folder If TRUE, write calcPhenotype outputs to calcPhenotype_Output in the current working directory. The default is FALSE.
+#'@return A matrix of predicted drug response values. If rsq, cc, or report_pc is TRUE, returns a list containing the predictions and requested optional outputs. If folder is TRUE, the same object is returned invisibly after files are written.
 #'@import sva
 #'@import ridge
 #'@import car
-#'@import ridge
-#'@import glmnet
-#'@import tidyverse
 #'@import utils
 #'@import stats
-#'@importFrom pls explvar explvar
+#'@importFrom pls pcr explvar
 #'@keywords predict drug sensitivity and phenotype
 #'@export
 calcPhenotype<-function (trainingExprData,
@@ -270,7 +265,7 @@ calcPhenotype<-function (trainingExprData,
                          cc=FALSE,
                          percent=80,
                          rsq=FALSE,
-                         folder = TRUE)
+                         folder = FALSE)
 {
 
   #Initiate empty lists for each data type you'd like to collect.
@@ -279,6 +274,7 @@ calcPhenotype<-function (trainingExprData,
   rsqs<-list() #Collects R^2 values.
   cors<-list() #Collects correlation coefficient for each gene across all samples vs. each drug across all samples.
   pvalues<-list() #Collects p-values for the correlation coefficients.
+  pcs_list<-list() #Collects principal components when report_pc is TRUE.
 
   #vs=c()
 
@@ -502,9 +498,12 @@ calcPhenotype<-function (trainingExprData,
         if (report_pc){
           if (printOutput) message("\nObtaining principal components...")
           pcs<-coef(pcr_model, comps = ncomp) #comps: numeric, which components to return.
-          dir.create("./calcPhenotype_Output")
-          path<-paste('./calcPhenotype_Output/', drugs[a], '.RData', sep="")
-          save(pcs, file=path)
+          pcs_list[[drugs[a]]]<-pcs
+          if (folder) {
+            dir.create("./calcPhenotype_Output", showWarnings=FALSE)
+            path<-paste('./calcPhenotype_Output/', drugs[a], '.RData', sep="")
+            save(pcs, file=path)
+          }
         }
 
       } else {
@@ -673,40 +672,59 @@ calcPhenotype<-function (trainingExprData,
   colnames(DrugPredictions_mat)<-drugs
   rownames(DrugPredictions_mat)<-colnames(testExprData)
 
+  output <- DrugPredictions_mat
+  if(rsq){
+    names(rsqs)<-drugs
+    rsqs_mat<-do.call(cbind, rsqs)
+  }
+  if(cc){
+    names(cors)<-drugs
+    cor_mat<-do.call(cbind, cors)
+    rownames(cor_mat)<-rownames(homData$train[keepRows,NonNAindex])
+    colnames(cor_mat)<-drugs
+
+    names(pvalues)<-drugs
+    p_mat<-do.call(cbind, pvalues)
+    rownames(p_mat)<-rownames(homData$train[keepRows, NonNAindex])
+    colnames(p_mat)<-drugs
+  }
+  if(rsq || cc || report_pc){
+    output <- list(DrugPredictions=DrugPredictions_mat)
+    if(rsq){
+      output$rsq <- rsqs_mat
+    }
+    if(cc){
+      output$cors <- cor_mat
+      output$pvalues <- p_mat
+    }
+    if(report_pc){
+      output$pcs <- pcs_list
+    }
+  }
+
   if(folder){
-  dir.create("./calcPhenotype_Output")
+  dir.create("./calcPhenotype_Output", showWarnings=FALSE)
   write.csv(DrugPredictions_mat, file="./calcPhenotype_Output/DrugPredictions.csv", row.names = TRUE, col.names = TRUE)
 
   #If rsq=TRUE, save R^2 data.
     if(rsq){
-      names(rsqs)<-drugs
-      rsqs_mat<-do.call(cbind, rsqs)
-      dir.create("./calcPhenotype_Output")
+      dir.create("./calcPhenotype_Output", showWarnings=FALSE)
       write.table(rsqs_mat, file="./calcPhenotype_Output/R^2.txt")
     }
 
   #If CC=TRUE, save correlation coefficient data.
     if(cc){
-      names(cors)<-drugs
-      cor_mat<-do.call(cbind, cors)
-      rownames(cor_mat)<-rownames(homData$train[keepRows,NonNAindex])
-      colnames(cor_mat)<-drugs
-      dir.create("./calcPhenotype_Output")
+      dir.create("./calcPhenotype_Output", showWarnings=FALSE)
       write.table(cor_mat, file="./calcPhenotype_Output/cors.txt")
 
-      names(pvalues)<-drugs
-      p_mat<-do.call(cbind, pvalues)
-      rownames(p_mat)<-rownames(homData$train[keepRows, NonNAindex])
-      colnames(p_mat)<-drugs
-      dir.create("./calcPhenotype_Output")
+      dir.create("./calcPhenotype_Output", showWarnings=FALSE)
       write.table(p_mat, file="./calcPhenotype_Output/pvalues.txt")
     }
 
-  } else {
-
-    return(DrugPredictions_mat)
-
+    return(invisible(output))
   }
+
+  return(output)
 
   #print(vs)
 }
@@ -727,29 +745,24 @@ calcPhenotype<-function (trainingExprData,
 #'@param printOutput Set to FALSE to supress output.
 #'@param pcr Indicates whether or not you'd like to use pcr for feature (gene) reduction. Options are 'TRUE' and 'FALSE'. If you indicate 'report_pc=TRUE' you need to also indicate 'pcr=TRUE'
 #'@param removeLowVaringGenesFrom Determine method to remove low varying genes. Options are 'homogenizeData' and 'rawData'.
-#'@param report_pc Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'. Folder must be set to TRUE.
-#'@param cc Indicate if you want correlation coefficients for biomarker discovery. folder must be set to TRUE
+#'@param report_pc Indicates whether you want to output the training principal components. Options are 'TRUE' and 'FALSE'.
+#'@param cc Indicate if you want correlation coefficients for biomarker discovery.
 #'@param percent Indicate percent variability (of the training data) you'd like principal components to reflect if pcr=TRUE. Default is 80 for 80%
 #'These are the correlations between a given gene of interest across all samples vs. a given drug response across samples.
 #'These correlations can be ranked to obtain a ranked correlation to determine highly correlated drug-gene associations.
 #'@param rsq Indicate whether or not you want to output the R^2 values for the data you train on from true and predicted values.
 #'These values represent the percentage in which the optimal model accounts for the variance in the training data.
-#'Options are 'TRUE' and 'FALSE'. folder must be set to TRUE
-#'@param folder Indicate whether the user wants to return a folder or simply assign the calcPhenotype output. If true, run the function without assignment as it will return a folder with the results. If false, assign <- calcphenotype to save results
+#'Options are 'TRUE' and 'FALSE'.
+#'@param folder Retained for compatibility with calcPhenotype arguments. Cross-validation results are returned as an object.
 #' @param cvFold Indicate the number of k-folds wanted in the CV calculation. -1 indicates a leave-one-out cross validation
 
-#'@return Depends on the folder parameter. If folder = True, .txt files will be saved into a folder in your working directory automatically. The folder will include the estimated drug response values as a .txt file. Depending on the rsq, cc, report_pc parameters specified, the .txt file outputs of this function will also include
-#'the R^2 data, and the correlation coefficients and principal components are stored as .RData files for each drug in your drug dataset.
-#'If folder = 'FALSE', then only the predicted drug response values will be returned as an object.
+#'@return A list containing cross-validated predicted phenotype values and real phenotype values.
 #'@import sva
 #'@import ridge
 #'@import car
-#'@import ridge
-#'@import glmnet
-#'@import tidyverse
 #'@import utils
 #'@import stats
-#'@importFrom pls explvar explvar
+#'@importFrom pls pcr explvar
 #'@keywords predict drug sensitivity and phenotype
 #'@export
 predictionAccuracybyCV <- function (trainingExprData,
@@ -767,7 +780,7 @@ predictionAccuracybyCV <- function (trainingExprData,
                                     cc=FALSE,
                                     percent=80,
                                     rsq=FALSE,
-                                    folder = TRUE, cvFold = -1)
+                                    folder = FALSE, cvFold = -1)
 
 
 {  if ((ncol(trainingExprData) < minNumSamples)) {

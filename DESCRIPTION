@@ -56,8 +56,6 @@ Imports:
     GenomicFeatures,
     org.Hs.eg.db,
     TxDb.Hsapiens.UCSC.hg19.knownGene,
-    tidyverse,
-    TCGAbiolinks,
     BiocGenerics,
     GenomicRanges,
     IRanges,
@@ -65,10 +63,5 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    gdata,
-    genefilter,
-    maftools,
-    readxl,
-    testthat (>= 3.0.0)
+    TCGAbiolinks
 VignetteBuilder: knitr
-Config/testthat/edition: 3
