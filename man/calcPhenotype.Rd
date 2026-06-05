@@ -30,7 +30,7 @@ calcPhenotype(
 
 \item{testExprData}{The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".}
 
-\item{batchCorrect}{How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantiles normalization or "none" for no homogenization.}
+\item{batchCorrect}{How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantile normalization, "standardize" for within-dataset z-score standardization, "rank", "rank_then_eb", or "none" for no homogenization.}
 
 \item{powerTransformPhenotype}{Should the phenotype be power transformed before we fit the regression model? Default to TRUE, set to FALSE if the phenotype is already known to be highly normal.}
 

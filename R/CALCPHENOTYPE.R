@@ -19,7 +19,7 @@ doVariableSelection <- function(exprMat, removeLowVaryingGenes=.2)
 #'It will deal with duplicated gene names, as it subsets and orders the matrices correctly.
 #'@param testExprMat A gene expression matrix for samples on which we wish to predict a phenotype.Genes are rows, samples are columns.
 #'@param trainExprMat A gene expression matrix for samples for which the phenotype is already known.Genes are rows, samples are columns.
-#'@param batchCorrect The type of batch correction to be used. Options are 'eb' for Combat, 'none', or 'qn' for quantile normalization.
+#'@param batchCorrect The type of batch correction to be used. Options are 'eb' for ComBat, 'qn' for quantile normalization, 'standardize' for within-dataset z-score standardization, 'rank', 'rank_then_eb', or 'none'. The 'standardize' option can be useful when using microarray training data to build models on RNA-seq testing data.
 #'#The default is 'eb'.
 #'@param selection This parameter can be used to specify how duplicates are handled. The default value of -1 means to ask the user.
 #'#Other options include '1' to summarize duplicates by their mean, and '2'to discard all duplicated genes.
@@ -225,7 +225,7 @@ summarizeGenesByMean <- function(exprMat)
 #'@param trainingExprData The training data. A matrix of expression levels. rownames() are genes, colnames() are samples (cell line names or cosmic ides, etc.). rownames() must be specified and must contain the same type of gene ids as "testExprData"
 #'@param trainingPtype The known phenotype for "trainingExprData". This data must be a matrix of drugs/rows x cell lines/columns or cosmic ids/columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).
 #'@param testExprData The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".
-#'@param batchCorrect How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantiles normalization or "none" for no homogenization.
+#'@param batchCorrect How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantile normalization, "standardize" for within-dataset z-score standardization, "rank", "rank_then_eb", or "none" for no homogenization.
 #'@param powerTransformPhenotype Should the phenotype be power transformed before we fit the regression model? Default to TRUE, set to FALSE if the phenotype is already known to be highly normal.
 #'@param removeLowVaryingGenes What proportion of low varying genes should be removed? 20 percent be default
 #'@param minNumSamples How many training and test samples are required. Print an error if below this threshold
@@ -738,7 +738,7 @@ calcPhenotype<-function (trainingExprData,
 #'@param trainingExprData The training data. A matrix of expression levels. rownames() are genes, colnames() are samples (cell line names or cosmic ides, etc.). rownames() must be specified and must contain the same type of gene ids as "testExprData"
 #'@param trainingPtype The known phenotype for "trainingExprData". This data must be a matrix of drugs/rows x cell lines/columns or cosmic ids/columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).
 #'@param testExprData The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".
-#'@param batchCorrect How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantiles normalization or "none" for no homogenization.
+#'@param batchCorrect How should training and test data matrices be homogenized. Choices are "eb" (default) for ComBat, "qn" for quantile normalization, "standardize" for within-dataset z-score standardization, "rank", "rank_then_eb", or "none" for no homogenization.
 #'@param powerTransformPhenotype Should the phenotype be power transformed before we fit the regression model? Default to TRUE, set to FALSE if the phenotype is already known to be highly normal.
 #'@param removeLowVaryingGenes What proportion of low varying genes should be removed? 20 percent be default
 #'@param minNumSamples How many training and test samples are required. Print an error if below this threshold
