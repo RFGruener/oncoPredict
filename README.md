@@ -1,6 +1,6 @@
 # oncoPredict 
 
-Note, for questions on oncoPredict, pleast contact us at rshuang at umn.edu . The email associated with this account is not regularly checked. 
+Note, for questions on oncoPredict, pleast contact us at rshuang at umn.edu . The email associated with this github account is not regularly checked. 
 
 ___________________________________________________
 
