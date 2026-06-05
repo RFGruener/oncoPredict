@@ -32,7 +32,7 @@ RoxygenNote: 7.3.2
 Depends: R (>= 4.1.0)
 biocViews:
     sva,
-    preprocessCore, 
+    limma, 
     stringr,
     biomaRt,
     genefilter,
@@ -52,7 +52,7 @@ Imports:
     glmnet,
     pls,
     sva,
-    preprocessCore,
+    limma,
     GenomicFeatures,
     org.Hs.eg.db,
     TxDb.Hsapiens.UCSC.hg19.knownGene,

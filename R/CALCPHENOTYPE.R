@@ -25,7 +25,7 @@ doVariableSelection <- function(exprMat, removeLowVaryingGenes=.2)
 #'#Other options include '1' to summarize duplicates by their mean, and '2'to discard all duplicated genes.
 #'@param printOutput To suppress output, set to false. Default is TRUE.
 #'@import sva
-#'@import preprocessCore
+#'@importFrom limma normalizeQuantiles
 #'@keywords Homogenize gene expression data.
 #'@return A list containing two entries $train and $test, which are the homogenized input matrices.
 #'@export
@@ -164,7 +164,8 @@ homogenizeData<-function (testExprMat, trainExprMat, batchCorrect = "eb", select
   else if (batchCorrect == "qn")
   {
     dataMat <- cbind(trainExprMat, testExprMat)
-    dataMatNorm <- normalize.quantiles(dataMat)
+    dataMatNorm <- normalizeQuantiles(dataMat)
+    dimnames(dataMatNorm) <- dimnames(dataMat)
     whichbatch <- as.factor(c(rep("train", ncol(trainExprMat)),
                               rep("test", ncol(testExprMat))))
     return(list(train = dataMatNorm[, whichbatch == "train"],

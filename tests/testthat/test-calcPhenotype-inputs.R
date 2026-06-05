@@ -68,3 +68,20 @@ test_that("calcPhenotype preserves one-column trainingPtype as a matrix", {
   expect_true(is.matrix(output))
   expect_equal(dim(output), c(3L, 1L))
 })
+
+test_that("homogenizeData qn preserves dimnames", {
+  inputs <- make_calcPhenotype_inputs()
+
+  output <- homogenizeData(
+    testExprMat=inputs$testExprData,
+    trainExprMat=inputs$trainingExprData,
+    batchCorrect="qn",
+    selection=1,
+    printOutput=FALSE
+  )
+
+  expect_equal(rownames(output$train), rownames(inputs$trainingExprData))
+  expect_equal(rownames(output$test), rownames(inputs$testExprData))
+  expect_equal(colnames(output$train), colnames(inputs$trainingExprData))
+  expect_equal(colnames(output$test), colnames(inputs$testExprData))
+})
