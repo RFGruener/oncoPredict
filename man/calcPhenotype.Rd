@@ -20,13 +20,15 @@ calcPhenotype(
   cc = FALSE,
   percent = 80,
   rsq = FALSE,
-  folder = FALSE
+  folder = FALSE,
+  parallel = FALSE,
+  cores = 1
 )
 }
 \arguments{
 \item{trainingExprData}{The training data. A matrix of expression levels. rownames() are genes, colnames() are samples (cell line names or cosmic ides, etc.). rownames() must be specified and must contain the same type of gene ids as "testExprData"}
 
-\item{trainingPtype}{The known phenotype for "trainingExprData". This data must be a matrix of drugs/rows x cell lines/columns or cosmic ids/columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).}
+\item{trainingPtype}{The known phenotype for "trainingExprData". This data must be a matrix with training samples as rows and drugs or phenotypes as columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).}
 
 \item{testExprData}{The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".}
 
@@ -59,6 +61,10 @@ These values represent the percentage in which the optimal model accounts for th
 Options are 'TRUE' and 'FALSE'.}
 
 \item{folder}{If TRUE, write calcPhenotype outputs to calcPhenotype_Output in the current working directory. The default is FALSE.}
+
+\item{parallel}{If TRUE, fit drug models in parallel after the shared homogenization and gene-filtering steps are complete. The default is FALSE.}
+
+\item{cores}{The number of cores to use when parallel is TRUE. Parallel execution uses forked processes via parallel::mclapply, which is not available for multicore execution on Windows PCs; on Windows, calcPhenotype will warn and run serially.}
 }
 \value{
 A matrix of predicted drug response values. If rsq, cc, or report_pc is TRUE, returns a list containing the predictions and requested optional outputs. If folder is TRUE, the same object is returned invisibly after files are written.

@@ -21,13 +21,15 @@ predictionAccuracybyCV(
   percent = 80,
   rsq = FALSE,
   folder = FALSE,
-  cvFold = -1
+  cvFold = -1,
+  parallel = FALSE,
+  cores = 1
 )
 }
 \arguments{
 \item{trainingExprData}{The training data. A matrix of expression levels. rownames() are genes, colnames() are samples (cell line names or cosmic ides, etc.). rownames() must be specified and must contain the same type of gene ids as "testExprData"}
 
-\item{trainingPtype}{The known phenotype for "trainingExprData". This data must be a matrix of drugs/rows x cell lines/columns or cosmic ids/columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).}
+\item{trainingPtype}{The known phenotype for "trainingExprData". This can be a one-drug vector with one value per training sample or a matrix with training samples as rows and drugs or phenotypes as columns. This matrix can contain NA values, that is ok (they are removed in the calcPhenotype() function).}
 
 \item{testExprData}{The test data where the phenotype will be estimated. It is a matrix of expression levels, rows contain genes and columns contain samples, "rownames()" must be specified and must contain the same type of gene ids as "trainingExprData".}
 
@@ -62,6 +64,10 @@ Options are 'TRUE' and 'FALSE'.}
 \item{folder}{Retained for compatibility with calcPhenotype arguments. Cross-validation results are returned as an object.}
 
 \item{cvFold}{Indicate the number of k-folds wanted in the CV calculation. -1 indicates a leave-one-out cross validation}
+
+\item{parallel}{If TRUE, run cross-validation folds in parallel. The default is FALSE.}
+
+\item{cores}{The number of cores to use when parallel is TRUE. Parallel execution uses forked processes via parallel::mclapply, which is not available for multicore execution on Windows PCs; on Windows, predictionAccuracybyCV will warn and run serially.}
 }
 \value{
 A list containing cross-validated predicted phenotype values and real phenotype values.

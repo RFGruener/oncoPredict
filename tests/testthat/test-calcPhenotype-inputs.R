@@ -19,7 +19,7 @@ make_calcPhenotype_inputs <- function(n_genes=8, n_train=6, n_test=3, n_drugs=2)
   )
 }
 
-run_calcPhenotype <- function(inputs) {
+run_calcPhenotype <- function(inputs, ...) {
   calcPhenotype(
     trainingExprData=inputs$trainingExprData,
     trainingPtype=inputs$trainingPtype,
@@ -32,7 +32,8 @@ run_calcPhenotype <- function(inputs) {
     printOutput=FALSE,
     pcr=FALSE,
     removeLowVaringGenesFrom="homogenizeData",
-    folder=FALSE
+    folder=FALSE,
+    ...
   )
 }
 
@@ -84,4 +85,76 @@ test_that("homogenizeData qn preserves dimnames", {
   expect_equal(rownames(output$test), rownames(inputs$testExprData))
   expect_equal(colnames(output$train), colnames(inputs$trainingExprData))
   expect_equal(colnames(output$test), colnames(inputs$testExprData))
+})
+
+test_that("calcPhenotype parallel returns the same predictions as serial", {
+  skip_on_os("windows")
+  inputs <- make_calcPhenotype_inputs(n_drugs=3)
+
+  serial <- run_calcPhenotype(inputs, parallel=FALSE)
+  parallel_output <- run_calcPhenotype(inputs, parallel=TRUE, cores=2)
+
+  expect_equal(parallel_output, serial)
+})
+
+test_that("calcPhenotype validates cores", {
+  inputs <- make_calcPhenotype_inputs()
+
+  expect_error(
+    run_calcPhenotype(inputs, parallel=TRUE, cores=0),
+    '"cores" must be a positive integer',
+    fixed=TRUE
+  )
+})
+
+run_predictionAccuracybyCV <- function(inputs, trainingPtype=inputs$trainingPtype[, 1, drop=FALSE], ...) {
+  predictionAccuracybyCV(
+    trainingExprData=inputs$trainingExprData,
+    trainingPtype=trainingPtype,
+    testExprData=NULL,
+    batchCorrect="none",
+    powerTransformPhenotype=FALSE,
+    removeLowVaryingGenes=0,
+    minNumSamples=0,
+    selection=1,
+    printOutput=FALSE,
+    pcr=FALSE,
+    removeLowVaringGenesFrom="homogenizeData",
+    folder=FALSE,
+    ...
+  )
+}
+
+test_that("predictionAccuracybyCV supports one-drug matrix inputs", {
+  inputs <- make_calcPhenotype_inputs(n_drugs=1)
+
+  output <- run_predictionAccuracybyCV(inputs, cvFold=3)
+
+  expect_type(output$cvPtype, "double")
+  expect_equal(length(output$cvPtype), ncol(inputs$trainingExprData))
+  expect_named(output$cvPtype, colnames(inputs$trainingExprData))
+  expect_type(output$realPtype, "double")
+  expect_named(output$realPtype, colnames(inputs$trainingExprData))
+})
+
+test_that("predictionAccuracybyCV parallel returns the same predictions as serial", {
+  skip_on_os("windows")
+  inputs <- make_calcPhenotype_inputs(n_drugs=1)
+  set.seed(10)
+  serial <- run_predictionAccuracybyCV(inputs, cvFold=-1, parallel=FALSE)
+
+  set.seed(10)
+  parallel_output <- run_predictionAccuracybyCV(inputs, cvFold=-1, parallel=TRUE, cores=2)
+
+  expect_equal(parallel_output, serial)
+})
+
+test_that("predictionAccuracybyCV validates cores", {
+  inputs <- make_calcPhenotype_inputs(n_drugs=1)
+
+  expect_error(
+    run_predictionAccuracybyCV(inputs, parallel=TRUE, cores=0),
+    '"cores" must be a positive integer',
+    fixed=TRUE
+  )
 })
