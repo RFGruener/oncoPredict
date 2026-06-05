@@ -282,12 +282,12 @@ calcPhenotype<-function (trainingExprData,
 
   #Check the supplied data and parameters.
   #_______________________________________________________________
-  if (class(testExprData)[1] != "matrix")
-    stop("\nERROR: \"testExprData\" must be a matrix.")
-  if (class(trainingExprData)[1] != "matrix")
-    stop("\nERROR: \"trainingExprData\" must be a matrix.")
-  if (class(trainingPtype)[1] != "matrix")
-    stop("\nERROR: \"trainingPtype\" must be a matrix.")
+  if (!is.matrix(testExprData))
+    stop("\nERROR: \"testExprData\" must be a matrix.", call. = FALSE)
+  if (!is.matrix(trainingExprData))
+    stop("\nERROR: \"trainingExprData\" must be a matrix.", call. = FALSE)
+  if (!is.matrix(trainingPtype))
+    stop("\nERROR: \"trainingPtype\" must be a matrix.", call. = FALSE)
 
   if (report_pc)
     if (pcr == FALSE)
@@ -305,8 +305,8 @@ calcPhenotype<-function (trainingExprData,
 
   commonCellLines<-colnames(trainingExprData)[colnames(trainingExprData) %in% rownames(trainingPtype)]
 
-  trainingExprData <- trainingExprData[,commonCellLines]
-  trainingPtype <- trainingPtype[commonCellLines,]
+  trainingExprData <- trainingExprData[, commonCellLines, drop=FALSE]
+  trainingPtype <- trainingPtype[commonCellLines, , drop=FALSE]
 
   #Check if an adequate number of training and test samples have been supplied.
   #_______________________________________________________________
@@ -354,7 +354,7 @@ calcPhenotype<-function (trainingExprData,
 
     #Modify trainingPtype and trainingExprData so that you only use cell lines for which you have expression and response data for.
     #_______________________________________________________________
-    trainingPtype2<-trainingPtype[,a] #Obtain the response data for the compound of interest.
+    trainingPtype2<-trainingPtype[, a, drop=FALSE] #Obtain the response data for the compound of interest.
     NonNAindex <- which(!is.na(trainingPtype2)) #Get the indices of the non NAs. You only want the cell lines/cosmic ids that you have drug info for.
 
     samps<-rownames(trainingPtype)[NonNAindex] #Obtain cell lines you have expression and response data for.
