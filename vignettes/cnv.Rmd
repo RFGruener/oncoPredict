@@ -75,7 +75,8 @@ rownames(drug_prediction)<-substring(rows, 3, nchar(rows))
 drug_prediction<-as.data.frame(drug_prediction)
 
 #Determine the number of samples you want the CNAs to be amplified in. The default is 10.
-n=10
+#The included CNV example is intentionally small, so use a lower threshold for this vignette.
+n=5
 
 #Indicate whether or not you would like to test CNA amplification data. If TRUE, you will test CNA amplifications. If FALSE, you will test mutation data.
 cnv=TRUE
