@@ -37,9 +37,7 @@ biocViews:
     stringr,
     biomaRt,
     genefilter,
-    org.Hs.eg.db,
     GenomicFeatures,
-    TxDb.Hsapiens.UCSC.hg19.knownGene,
     genefilter,
     TCGAbiolinks,
     BiocGenerics,
@@ -55,8 +53,6 @@ Imports:
     sva,
     limma,
     GenomicFeatures,
-    org.Hs.eg.db,
-    TxDb.Hsapiens.UCSC.hg19.knownGene,
     BiocGenerics,
     GenomicRanges,
     IRanges,
@@ -64,7 +60,11 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
+    org.Hs.eg.db,
+    TxDb.Hsapiens.UCSC.hg19.knownGene,
     TCGAbiolinks,
     testthat (>= 3.0.0)
+Additional_repositories:
+    https://bioconductor.org/packages/release/data/annotation
 VignetteBuilder: knitr
 Config/testthat/edition: 3

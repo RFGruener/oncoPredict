@@ -3,12 +3,10 @@
 #'@param folder If TRUE, write a map.RData file containing the mapped CNV matrix and tumor sample indices. The default is FALSE.
 #'@keywords Map CNV data to genes
 #'@return A list containing theCnvQuantVecList_mat (rows are genes, columns are samples) and tumorSamps (primary tumor/01A sample column indices).
-#'@import org.Hs.eg.db
-#'@import GenomicFeatures
-#'@import TxDb.Hsapiens.UCSC.hg19.knownGene
 #'@import utils
 #'@import stats
 #'@importFrom BiocGenerics toTable
+#'@importFrom GenomicFeatures genes
 #'@importFrom GenomicRanges GRanges
 #'@importFrom IRanges IRanges subsetByOverlaps findOverlaps countOverlaps
 #'@importFrom S4Vectors Rle
@@ -20,10 +18,19 @@ map_cnv<-function(Cnvs, folder=FALSE)
   if (('Segment_Mean' %in% colnames(Cnvs)) == FALSE)
     stop("\nERROR: Check colnames() of cnv data. colnames() must include Sample, Chromosome, Start, End, and Segment_Mean")
 
+  if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
+    stop("Package 'org.Hs.eg.db' is required for map_cnv(). Install it with BiocManager::install('org.Hs.eg.db').",
+         call. = FALSE)
+  }
+  if (!requireNamespace("TxDb.Hsapiens.UCSC.hg19.knownGene", quietly = TRUE)) {
+    stop("Package 'TxDb.Hsapiens.UCSC.hg19.knownGene' is required for map_cnv(). Install it with BiocManager::install('TxDb.Hsapiens.UCSC.hg19.knownGene').",
+         call. = FALSE)
+  }
+
   #Load the gene ranges for HG19 using.
-  txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+  txdb <- getExportedValue("TxDb.Hsapiens.UCSC.hg19.knownGene", "TxDb.Hsapiens.UCSC.hg19.knownGene")
   geneRanges <- genes(txdb) #seqnames (chr), ranges, gene id.
-  e2s = toTable(org.Hs.egSYMBOL) #gene id, gene symbol.
+  e2s = toTable(getExportedValue("org.Hs.eg.db", "org.Hs.egSYMBOL")) #gene id, gene symbol.
   syms <- e2s[, "symbol"] #Gene symbols for HG19.
   names(syms) <- e2s[, "gene_id"] #Gene symbols with gene id.
   theGeneSymsOrd <- syms[as.character(geneRanges$gene_id)]
@@ -99,9 +106,6 @@ map_cnv<-function(Cnvs, folder=FALSE)
 #'@param cnv TRUE or FALSE. Indicate whether or not you would like to test CNA amplification data. If TRUE, you will test CNA amplifications. If FALSE, you will test mutation data.
 #'@param folder If TRUE, write IDWAS results to CSV files in the current working directory. The default is FALSE.
 #'@keywords Test CNA amplification or mutation data to genes.
-#'@import org.Hs.eg.db
-#'@import TxDb.Hsapiens.UCSC.hg19.knownGene
-#'@import GenomicFeatures
 #'@import utils
 #'@import stats
 #'@import parallel

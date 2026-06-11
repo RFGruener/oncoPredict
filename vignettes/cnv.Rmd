@@ -30,7 +30,7 @@ vignette_file <- function(...) {
 }
 ```
 
-```{r setup}
+```{r setup, eval=requireNamespace("org.Hs.eg.db", quietly = TRUE) && requireNamespace("TxDb.Hsapiens.UCSC.hg19.knownGene", quietly = TRUE)}
 
 library(oncoPredict)
 
